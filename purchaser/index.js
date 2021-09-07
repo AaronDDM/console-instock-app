@@ -12,6 +12,7 @@ const ADD_CART_ITEMS = [
 ];
 
 exports.lambdaHandler = async (event, context) => {
+    console.debug(`#> Attempting to communicate with M$`);
     const myHeaders = new Headers();
     myHeaders.append("authority", "cart.production.store-web.dynamics.com");
     myHeaders.append("pragma", "no-cache");
