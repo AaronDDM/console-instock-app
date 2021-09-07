@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Console InStock Alert App
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Parameters:
+  DiscordNotificationURL:
+    Type: String
+    Description: "The discord webhoook notification URL"
+  AuthorizationMUID:
+    Type: String 
+    Description: "The Authorization MUID from Microsoft"
+
+Resources:
+  Purchaser:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: "Purchaser"
+      CodeUri: purchaser/
+      Handler: index.lambdaHandler
+      Runtime: nodejs14.x
+      Environment:
+        Variables:
+          AUTHORIZATION_MUID: !Ref AuthorizationMUID
+
+  StockScanner:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: "StockScanner"
+      CodeUri: stock-scanner/
+      Handler: index.lambdaHandler
+      Runtime: nodejs14.x
+      Environment:
+        Variables:
+          DISCORD_NOTIFICATION_URL: !Ref DiscordNotificationURL
+          PURCHASER_LAMBDA_NAME: "Purchaser"
+
+  ScheduledRule: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "rate(1 minute)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: !GetAtt StockScanner.Arn
+          Id: "TargetStockScanner"
+
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "StockScanner"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRule"
+          - "Arn"
