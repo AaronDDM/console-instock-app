@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+const fetch = require("node-fetch");
 
 const AUTHORIZATION_MUID = process.env.AUTHORIZATION_MUID;
 const ADD_CART_ITEMS = [
@@ -11,7 +11,7 @@ const ADD_CART_ITEMS = [
     }
 ];
 
-export const lambdaHandler = async (event, context) => {
+exports.lambdaHandler = async (event, context) => {
     const myHeaders = new Headers();
     myHeaders.append("authority", "cart.production.store-web.dynamics.com");
     myHeaders.append("pragma", "no-cache");

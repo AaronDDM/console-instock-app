@@ -1,6 +1,6 @@
-import fetch from "node-fetch";
-import jsdom from "jsdom";
-import aws from "aws-sdk";
+const fetch = require("node-fetch");
+const jsdom = require("jsdom");
+const aws = require("aws-sdk");
 
 const PURCHASER_LAMBDA_NAME = process.env.PURCHASER_LAMBDA_NAME;
 const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz";
@@ -17,7 +17,7 @@ async function send_discord_notification(url, content) {
     return fetch(url, { method: "POST", body: JSON.stringify({ content }) });
 }
 
-export const lambdaHandler = async (event, context) => {
+exports.lambdaHandler = async (event, context) => {
     const is_in_stock = (await get_stock_status(STOCK_CHECK_WEBSITE, "tr53218")) !== "out of stock";
     if (is_in_stock) {
         await send_discord_notification(DISCORD_NOTIFICATION_URL, "@everyone XBOX Series X is in Stock at Microsoft Store (Canada)");
