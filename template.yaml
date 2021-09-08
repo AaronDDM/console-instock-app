@@ -33,6 +33,9 @@ Resources:
       CodeUri: stock-scanner/
       Handler: index.lambdaHandler
       Runtime: nodejs14.x
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: "Purchaser"
       Environment:
         Variables:
           DISCORD_NOTIFICATION_URL: !Ref DiscordNotificationURL
