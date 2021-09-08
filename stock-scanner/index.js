@@ -20,12 +20,12 @@ async function send_discord_notification(url, content) {
 
 exports.lambdaHandler = async (event, context) => {
     console.debug(`#> Starting stock check`);
-    const is_in_stock = (await get_stock_status(STOCK_CHECK_WEBSITE, "tr53218")) === "out of stock";
+    const is_in_stock = (await get_stock_status(STOCK_CHECK_WEBSITE, "tr53218")) !== "out of stock";
     console.debug(`#> Ended stock check: ${is_in_stock ? "IN_STOCK" : "OUT_OF_STOCK"}`);
     if (is_in_stock) {
         console.debug(`#> Sending discord notification`);
         try {
-            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "@everyone XBOX Series X is in Stock at Microsoft Store (Canada)");
+            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "XBOX Series X is in Stock at Microsoft Store (Canada)");
             console.debug(`#> Dicord response: `, JSON.stringify(discord_response));
         } catch (error) {
             console.error(`#> Error sending discord notification: ${error}`);
