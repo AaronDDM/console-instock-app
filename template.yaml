@@ -36,10 +36,13 @@ Resources:
       Policies:
         - LambdaInvokePolicy:
             FunctionName: "Purchaser"
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BuyBotStateTable
       Environment:
         Variables:
           DISCORD_NOTIFICATION_URL: !Ref DiscordNotificationURL
           PURCHASER_LAMBDA_NAME: "Purchaser"
+          TABLE_NAME: "buy-bot-state-table"
 
   ScheduledRule: 
     Type: AWS::Events::Rule
@@ -62,3 +65,12 @@ Resources:
         Fn::GetAtt: 
           - "ScheduledRule"
           - "Arn"
+
+  BuyBotStateTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey: 
+        Name: "console"
+        Type: String
+      TableName: buy-bot-state-table
+      

@@ -2,17 +2,19 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const jsdom = require("jsdom");
 const aws = require("aws-sdk");
 
+const CONSOLE = "xbox-series-x";
+const TABLE_NAME = process.env.TABLE_NAME || "buy-bot-state-table";
 const AWS_REGION = process.env.AWS_REGION || "ca-central-1";
 const PURCHASER_LAMBDA_NAME = process.env.PURCHASER_LAMBDA_NAME || "Purchaser";
 const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz";
 const STOCK_CHECK_WEBSITE = "https://www.xbox.com/en-ca/configure/8WJ714N3RBTL";
 
+const db = new aws.DynamoDB.DocumentClient({ region: AWS_REGION });
+
 async function get_stock_status(scan_site_url) {
     const html = await fetch(scan_site_url, { method: "GET" }).then((response) => response.text())
     const html_doc = new jsdom.JSDOM(html);
-    const button_text = html_doc.window.document.querySelector(`button[aria-label="Checkout bundle"]`).textContent.toLowerCase();
-    console.debug(`#> Button text: ${button_text}`);
-    return button_text;
+    return html_doc.window.document.querySelector(`button[aria-label="Checkout bundle"]`).textContent.toLowerCase();
 }
 
 async function send_discord_notification(url, content) {
@@ -23,7 +25,13 @@ exports.lambdaHandler = async (event, context) => {
     console.debug(`#> Starting stock check`);
     const is_in_stock = (await get_stock_status(STOCK_CHECK_WEBSITE)) !== "out of stock";
     console.debug(`#> Ended stock check: ${is_in_stock ? "IN_STOCK" : "OUT_OF_STOCK"}`);
-    if (is_in_stock) {
+
+    const current_console_state = await db.get({ TableName: TABLE_NAME, Key: { "console": CONSOLE } }).promise();
+    const has_changed_state = (current_console_state.Item?.is_in_stock !== is_in_stock);
+
+    // Only notify discord + trigger the purchaser
+    // if the console is in stock and we got a state change
+    if (is_in_stock && has_changed_state) {
         console.debug(`#> Sending discord notification`);
         try {
             const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X is in Stock at Microsoft Store (Canada)");
@@ -45,5 +53,11 @@ exports.lambdaHandler = async (event, context) => {
         });
         console.debug(`#> Completed puchaser lambda invocation`);
     }
+
+    if (has_changed_state) {
+        await db.put({ TableName: TABLE_NAME, Item: { "console": CONSOLE, is_in_stock } }).promise();
+        console.debug(`#> Updated the database state`);
+    }
+
     return is_in_stock;
 }
