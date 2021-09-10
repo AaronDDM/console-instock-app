@@ -53,7 +53,15 @@ exports.lambdaHandler = async (event, context) => {
     }
 
     if (has_changed_state) {
-        await db.put({ TableName: TABLE_NAME, Item: { "console": CONSOLE, is_in_stock } }).promise();
+        const today = new Date();
+        const updated_at = today.toUTCString();
+
+        let Item = { "console": CONSOLE, is_in_stock, updated_at };
+        if (is_in_stock) {
+            Item.last_in_stock_at = today.toUTCString();
+        }
+
+        await db.put({ TableName: TABLE_NAME, Item }).promise();
         console.debug(`#> Updated the database state`);
     }
 
