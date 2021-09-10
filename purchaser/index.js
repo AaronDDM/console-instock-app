@@ -3,9 +3,9 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const AUTHORIZATION_MUID = process.env.AUTHORIZATION_MUID;
 const ADD_CART_ITEMS = [
     {
-        "productId": "8WJ714N3RB",
+        "productId": "8WJ714N3RBTL",
         "skuId": "490G",
-        "availabilityId": "8WJ714N3RBTL",
+        "availabilityId": "8W0DZS99WPZZ",
         "quantity": 1,
         "optionalCampaignId": ""
     }
