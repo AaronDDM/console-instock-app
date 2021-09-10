@@ -28,11 +28,12 @@ exports.lambdaHandler = async (event, context) => {
     const has_changed_state = (current_console_state.Item?.is_in_stock !== is_in_stock);
 
     // Only notify discord + trigger the purchaser
-    // if the console is in stock and we got a state change
+    // if the console is in stock and we got a state change.
+    // This prevents spam + keeps us from purchasing multiple times...
     if (is_in_stock && has_changed_state) {
         console.debug(`#> Sending discord notification`);
         try {
-            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X is in Stock at Microsoft Store (Canada)");
+            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X is in stock at Microsoft Store (Canada)");
             console.debug(`#> Dicord response: `, JSON.stringify(discord_response));
         } catch (error) {
             console.error(`#> Error sending discord notification: ${error}`);
@@ -56,7 +57,7 @@ exports.lambdaHandler = async (event, context) => {
         const today = new Date();
         const updated_at = today.toUTCString();
 
-        let Item = { "console": CONSOLE, is_in_stock, updated_at };
+        let Item = { "console": CONSOLE, is_in_stock, updated_at, last_in_stock_at: current_console_state.Item?.last_in_stock_at };
         if (is_in_stock) {
             Item.last_in_stock_at = today.toUTCString();
         }
