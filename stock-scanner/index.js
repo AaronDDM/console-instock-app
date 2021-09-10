@@ -1,5 +1,4 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-const jsdom = require("jsdom");
 const aws = require("aws-sdk");
 
 const CONSOLE = "xbox-series-x";
@@ -13,8 +12,7 @@ const db = new aws.DynamoDB.DocumentClient({ region: AWS_REGION });
 
 async function get_stock_status(scan_site_url) {
     const html = await fetch(scan_site_url, { method: "GET" }).then((response) => response.text())
-    const html_doc = new jsdom.JSDOM(html);
-    return html_doc.window.document.querySelector(`button[aria-label="Checkout bundle"]`).textContent.toLowerCase();
+    return !html.match(/out of stock/i)
 }
 
 async function send_discord_notification(url, content) {
@@ -23,7 +21,7 @@ async function send_discord_notification(url, content) {
 
 exports.lambdaHandler = async (event, context) => {
     console.debug(`#> Starting stock check`);
-    const is_in_stock = (await get_stock_status(STOCK_CHECK_WEBSITE)) !== "out of stock";
+    const is_in_stock = await get_stock_status(STOCK_CHECK_WEBSITE);
     console.debug(`#> Ended stock check: ${is_in_stock ? "IN_STOCK" : "OUT_OF_STOCK"}`);
 
     const current_console_state = await db.get({ TableName: TABLE_NAME, Key: { "console": CONSOLE } }).promise();
