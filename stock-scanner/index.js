@@ -28,7 +28,7 @@ async function get_stock_status(scan_site_url) {
     })
         .then((response) => response.json())
         .then((json) => {
-            //console.debug(`#> Debug status check: ${JSON.stringify(json)}`);
+            console.debug(`#> Debug status check: ${JSON.stringify(json)}`);
             if (!("inStock" in json)) {
                 return false;
             }
