@@ -6,6 +6,7 @@ const TABLE_NAME = process.env.TABLE_NAME || "buy-bot-state-table";
 const AWS_REGION = process.env.AWS_REGION || "ca-central-1";
 const PURCHASER_LAMBDA_NAME = process.env.PURCHASER_LAMBDA_NAME || "Purchaser";
 const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz";
+const DISCORD_BOT_STATUS_CHECK_URL = "https://discord.com/api/webhooks/888206072450531328/Y3yVNXUrAEpfsA8UK02Cs3ZwnFL5Vv8SngOH7b90zzFTS8XI8uZIdGW_pOubsVLWiToH";
 const STOCK_CHECK_WEBSITE = "https://inv.mp.microsoft.com/v2.0/inventory/CA";
 
 const db = new aws.DynamoDB.DocumentClient({ region: AWS_REGION });
@@ -27,7 +28,7 @@ async function get_stock_status(scan_site_url) {
         )
     })
         .then((response) => response.json())
-        .then((json) => {
+        .then(async (json) => {
             console.debug(`#> Debug status check: ${JSON.stringify(json)}`);
             if (!("inStock" in json)) {
                 return false;
@@ -39,23 +40,51 @@ async function get_stock_status(scan_site_url) {
                 return true;
             }
 
+            let log_object = [];
             let in_stock = false;
             const avaibilities = json.availabilities;
             for (let avaibility of avaibilities) {
-                const future_lots = avaibility.futureLots;
-                const lot_keys = Object.keys(future_lots);
+                const available_lots = avaibility.availableLots;
+                const available_lot_keys = Object.keys(available_lots);
+                for (let lot_key of available_lot_keys) {
+                    const lot = available_lots[lot_key];
+                    const distributor_ids = Object.keys(lot);
+                    for (let distributor_id of distributor_ids) {
+                        const distributor = lot[distributor_id];
+                        log_object.push({
+                            is_future_lot: false,
+                            lot_key,
+                            distributor_id,
+                            in_stock: distributor.inStock !== "False",
+                            online_order_available: distributor.onlineOrderAvailable !== "False"
+                        });
+                    }
+                }
 
-                lot_loop:
-                for (let lot_key of lot_keys) {
+                const future_lots = avaibility.futureLots;
+                const future_lot_keys = Object.keys(future_lots);
+                future_lot_loop:
+                for (let lot_key of future_lot_keys) {
                     const lot = future_lots[lot_key];
                     const distributor_ids = Object.keys(lot);
                     for (let distributor_id of distributor_ids) {
                         const distributor = lot[distributor_id];
                         in_stock = distributor.inStock !== "False";
+                        log_object.push({
+                            is_future_lot: true,
+                            lot_key,
+                            distributor_id,
+                            in_stock: distributor.inStock !== "False",
+                            online_order_available: distributor.onlineOrderAvailable !== "False"
+                        });
                         if (in_stock) {
-                            break lot_loop;
+                            break future_lot_loop;
                         }
                     }
+                }
+                
+                if (log_object.length > 0) {
+                    send_discord_notification(DISCORD_BOT_STATUS_CHECK_URL, "```" + JSON.stringify(log_object,null,4)+"```");
                 }
             }
 
@@ -85,7 +114,7 @@ exports.lambdaHandler = async (event, context) => {
     if (is_in_stock && has_changed_state) {
         console.debug(`#> Sending discord notification`);
         try {
-            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X IN STOCK https://www.microsoft.com/en-ca/store/buy?pid=8WJ714N3RBTL GO GO GO!");
+            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X IN STOCK https://www.microsoft.com/en-ca/store/buy?pid=8WJ714N3RBTL GO GO GO (https://www.microsoft.com/en-ca/store/cart)!");
             console.debug(`#> Dicord response: `, discord_response);
         } catch (error) {
             console.error(`#> Error sending discord notification: ${error}`);
