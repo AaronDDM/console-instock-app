@@ -6,7 +6,7 @@ const TABLE_NAME = process.env.TABLE_NAME || "buy-bot-state-table";
 const AWS_REGION = process.env.AWS_REGION || "ca-central-1";
 const PURCHASER_LAMBDA_NAME = process.env.PURCHASER_LAMBDA_NAME || "Purchaser";
 const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz";
-const STOCK_CHECK_WEBSITE = "https://inv.mp.microsoft.com/v2.0/inventory/CA?MS-CorrelationId=eda6903c-a7c9-4b13-8d5c-00d0d571ddad&MS-RequestId=eda6903c-a7c9-4b13-8d5c-00d0d571ddad&mode=continueOnError";
+const STOCK_CHECK_WEBSITE = "https://inv.mp.microsoft.com/v2.0/inventory/CA";
 
 const db = new aws.DynamoDB.DocumentClient({ region: AWS_REGION });
 
@@ -19,23 +19,43 @@ async function get_stock_status(scan_site_url) {
         body: JSON.stringify(
             [
                 {
-                    "condition": "IsOutOfStock1",
-                    "productId": "8WJ714N3RBTL",
                     "skuId": "490G",
-                    "inventorySkuId": "RRT-00001",
-                    "availabilityId": "8W0DZS99WPZZ",
-                    "distributorId": "9000000013"
+                    "productId": "8WJ714N3RBTL",
+                    "availabilityId": "8W0DZS99WPZZ"
                 }
             ]
         )
     })
         .then((response) => response.json())
         .then((json) => {
-            console.debug(`#> Debug status check: ${JSON.stringify(json)}`);
-            return "inStock" in json && json.inStock !== "False";
+            //console.debug(`#> Debug status check: ${JSON.stringify(json)}`);
+            if (!("inStock" in json)) {
+                return false;
+            }
+            let in_stock = false;
+            const avaibilities = json.availabilities;
+            for (let avaibility of avaibilities) {
+                const future_lots = avaibility.futureLots;
+                const lot_keys = Object.keys(future_lots);
+
+                lot_loop:
+                for (let lot_key of lot_keys) {
+                    const lot = future_lots[lot_key];
+                    const distributor_ids = Object.keys(lot);
+                    for (let distributor_id of distributor_ids) {
+                        const distributor = lot[distributor_id];
+                        in_stock = distributor.inStock !== "False";
+                        if (in_stock) {
+                            break lot_loop;
+                        }
+                    }
+                }
+            }
+
+            return in_stock;
         })
         .catch((error) => {
-            console.error(`#> Error occurred while checking stock status: ${error}.`);
+            console.error(`#> Error occurred while checking stock status`, error);
             return false;
         })
 }
@@ -56,13 +76,13 @@ exports.lambdaHandler = async (event, context) => {
     // if the console is in stock and we got a state change.
     // This prevents spam + keeps us from purchasing multiple times...
     if (is_in_stock && has_changed_state) {
-        // console.debug(`#> Sending discord notification`);
-        // try {
-        //     const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X is in stock at Microsoft Store (Canada)");
-        //     console.debug(`#> Dicord response: `, discord_response);
-        // } catch (error) {
-        //     console.error(`#> Error sending discord notification: ${error}`);
-        // }
+        console.debug(`#> Sending discord notification`);
+        try {
+            const discord_response = await send_discord_notification(DISCORD_NOTIFICATION_URL, "<@318422857795371008> <@231454366236803085> XBOX Series X IN STOCK https://www.microsoft.com/en-ca/store/buy?pid=8WJ714N3RBTL GO GO GO!");
+            console.debug(`#> Dicord response: `, discord_response);
+        } catch (error) {
+            console.error(`#> Error sending discord notification: ${error}`);
+        }
         console.debug(`#> Sent discord notification`);
         console.debug(`#> Starting puchaser lambda invocation`);
         // Invoke our purchaser lambda.
