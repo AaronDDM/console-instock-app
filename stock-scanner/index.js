@@ -32,6 +32,13 @@ async function get_stock_status(scan_site_url) {
             if (!("inStock" in json)) {
                 return false;
             }
+
+            // We should probably just return inStock if our global value
+            // is in stock, yeah?
+            if (json.inStock !== "False") {
+                return true;
+            }
+
             let in_stock = false;
             const avaibilities = json.availabilities;
             for (let avaibility of avaibilities) {
