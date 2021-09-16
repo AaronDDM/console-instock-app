@@ -84,7 +84,7 @@ async function get_stock_status(scan_site_url) {
                 }
                 
                 if (log_object.length > 0) {
-                    send_discord_notification(DISCORD_BOT_STATUS_CHECK_URL, "```" + JSON.stringify(log_object,null,4)+"```");
+                    send_discord_notification(DISCORD_BOT_STATUS_CHECK_URL, "```json" + "\n" + JSON.stringify(log_object,null,4)+"```");
                 }
             }
 
