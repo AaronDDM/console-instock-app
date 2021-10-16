@@ -10,38 +10,21 @@ Parameters:
   DiscordNotificationURL:
     Type: String
     Description: "The discord webhoook notification URL"
-  AuthorizationMUID:
-    Type: String 
-    Description: "The Authorization MUID from Microsoft"
 
 Resources:
-  Purchaser:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Properties:
-      FunctionName: "Purchaser"
-      CodeUri: purchaser/
-      Handler: index.lambdaHandler
-      Runtime: nodejs14.x
-      Environment:
-        Variables:
-          AUTHORIZATION_MUID: !Ref AuthorizationMUID
-
   StockScanner:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       FunctionName: "StockScanner"
-      CodeUri: stock-scanner/
-      Handler: index.lambdaHandler
+      CodeUri: stock-scanner/.build/
+      Handler: index.handler
       Runtime: nodejs14.x
       Policies:
-        - LambdaInvokePolicy:
-            FunctionName: "Purchaser"
         - DynamoDBCrudPolicy:
             TableName: !Ref BuyBotStateTable
       Environment:
         Variables:
           DISCORD_NOTIFICATION_URL: !Ref DiscordNotificationURL
-          PURCHASER_LAMBDA_NAME: "Purchaser"
           TABLE_NAME: "buy-bot-state-table"
 
   ScheduledRule: 
