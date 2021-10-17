@@ -1,6 +1,6 @@
 const DEBUG = process.env.DEBUG || false;
-const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz";
-const DISCORD_BOT_STATUS_CHECK_URL = "https://discord.com/api/webhooks/888206072450531328/Y3yVNXUrAEpfsA8UK02Cs3ZwnFL5Vv8SngOH7b90zzFTS8XI8uZIdGW_pOubsVLWiToH";
+const DISCORD_NOTIFICATION_URL = process.env.DISCORD_NOTIFICATION_URL || "";
+const DISCORD_BOT_STATUS_CHECK_URL = process.env.DISCORD_BOT_STATUS_CHECK_URL || "";
 const TABLE_NAME = process.env.TABLE_NAME || "buy-bot-state-table";
 const AWS_REGION = process.env.AWS_REGION || "ca-central-1";
 const CONSOLES = {
@@ -28,7 +28,7 @@ const CONSOLES = {
     }
 }
 
-export default {
+const config = {
     DEBUG,
     DISCORD_NOTIFICATION_URL,
     DISCORD_BOT_STATUS_CHECK_URL,
@@ -36,3 +36,11 @@ export default {
     AWS_REGION,
     CONSOLES
 }
+
+for (const value of Object.keys(config)) {
+    if (typeof config[value as keyof typeof config] === "string" && config[value as keyof typeof config].toString().length === 0) {
+        throw Error(`Invalid config for ${value}.`);
+    }
+}
+
+export default config;

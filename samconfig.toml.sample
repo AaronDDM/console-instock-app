@@ -8,5 +8,5 @@ s3_prefix = "console-stock-alert-app"
 region = "ca-central-1"
 confirm_changeset = false
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "DiscordNotificationURL=\"https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz\" AuthorizationMUID=\"[REPLACE AUTHORIZATION MUID HERE]\""
+parameter_overrides = "DiscordStatusNotificationURL=\"https://discord.com/api/webhooks/888206072450531328/Y3yVNXUrAEpfsA8UK02Cs3ZwnFL5Vv8SngOH7b90zzFTS8XI8uZIdGW_pOubsVLWiToH\" DiscordNotificationURL=\"https://discord.com/api/webhooks/884907776135008326/SzZY7S4axSxi7AeNaREGtpn_ozRrCuSAxNOvTQWeOLDhaz8M9fsy3MvJEW3eiH-L9blz\" AuthorizationMUID=\"[REPLACE AUTHORIZATION MUID HERE]\""
 image_repositories = []

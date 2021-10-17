@@ -9,3 +9,8 @@ export type CheckItem = {
     id: string;
     in_stock: boolean;
 }
+
+export type GlobalState = {
+    getState(console: string): Promise<Item | null>;
+    updateState(console: string, is_in_stock: boolean): Promise<boolean>;
+}

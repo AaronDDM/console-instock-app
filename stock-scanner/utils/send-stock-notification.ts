@@ -1,9 +1,8 @@
 import config from "../config";
-import global_state from '../state/db-state';
-import { CheckItem } from "../types";
+import { CheckItem, GlobalState } from "../types";
 import send_discord_notification from "./send-discord-notification";
 
-export default async function send_stock_notifications(items: Array<CheckItem>, state: typeof global_state) {
+export default async function send_stock_notifications(content: string, items: Array<CheckItem>, state: GlobalState) {
     console.debug(`#> [send_stock_notification] Started`);
 
     let embeds = [];
@@ -43,7 +42,7 @@ export default async function send_stock_notifications(items: Array<CheckItem>, 
             const discord_response = await send_discord_notification(
                 config.DEBUG ? config.DISCORD_BOT_STATUS_CHECK_URL : config.DISCORD_NOTIFICATION_URL,
                 {
-                    "content": config.DEBUG ? "This is a test. Please Ignore" : "<@231454366236803085> New Console Stock Notification!",
+                    "content": content,
                     "embeds": embeds
                 }
             );

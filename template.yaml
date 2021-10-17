@@ -7,6 +7,9 @@ Globals:
     Timeout: 15
 
 Parameters:
+  DiscordStatusNotificationURL:
+    Type: String
+    Description: "The discord webhoook status notification URL"
   DiscordNotificationURL:
     Type: String
     Description: "The discord webhoook notification URL"
@@ -24,6 +27,7 @@ Resources:
             TableName: !Ref BuyBotStateTable
       Environment:
         Variables:
+          DISCORD_BOT_STATUS_CHECK_URL: !Ref DiscordStatusNotificationURL
           DISCORD_NOTIFICATION_URL: !Ref DiscordNotificationURL
           TABLE_NAME: "buy-bot-state-table"
 

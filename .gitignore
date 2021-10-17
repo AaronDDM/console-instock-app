@@ -3,3 +3,4 @@ sam-app/
 .aws-sam/
 samconfig.toml
 .build
+.build-manual

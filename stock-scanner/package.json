@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "cp package.json ./.build/package.json && esbuild lambda/index.ts --bundle --platform=node --external:aws-sdk --outfile=./.build/index.js",
+    "build:manual": "esbuild manual/index.ts --bundle --platform=node --target=node12 --external:aws-sdk --external:express --external:node-fetch --outfile=./.build-manual/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
